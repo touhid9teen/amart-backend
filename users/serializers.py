@@ -18,6 +18,10 @@ class PhoneLoginSerializer(serializers.Serializer):
         if not Country.objects.filter(code=country_code, is_active=True).exists():
             raise serializers.ValidationError({"country_code": "Invalid country code."})
         
+          # If phone number is 10 digits and does not start with '0', add '0' at the start
+        if len(phone_number) == 10 and not phone_number.startswith('0'):
+            phone_number = '0' + phone_number
+            
         # Remove any non-digit characters from phone number
         data['phone_number'] = ''.join(filter(str.isdigit, phone_number))
         

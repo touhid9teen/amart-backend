@@ -42,8 +42,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'users',
-    'products',
-    'categories',
+    'store',
+    'order',
     'corsheaders',
 ]
 
@@ -55,6 +55,19 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+]
+
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = True
+# CORS_ALLOWED_ORIGINS = [
+#    "http://localhost:3000",
+#     "http://127.0.0.1:3000",
+# ]
+
+CORS_ALLOW_HEADERS = [
+    "content-type",
+    "authorization",
 ]
 
 ROOT_URLCONF = 'amat_backend.urls'
@@ -63,7 +76,9 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'users.authenticatin.CustomAuthentication',
     ),
+   
 }
+
 
 TEMPLATES = [
     {
@@ -157,4 +172,7 @@ SMS_API_KEY = os.environ.get('TWILIO_ACCOUNT_SID')
 SMS_API_SECRET = os.environ.get('TWILIO_AUTH_TOKEN')
 SMS_SENDER_PHONE_NO = os.environ.get('TWILIO_PHONE_NUMBER')
 
-print("-------------------------SMS_SENDER_PHONE_NO", SMS_SENDER_PHONE_NO)
+
+# Media files (Uploaded images)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

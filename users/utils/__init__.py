@@ -17,7 +17,8 @@ def send_otp_to_phone(user, otp):
 def create_and_send_otp(user):
     """Create an OTP for the user and send it to their phone"""
     otp_code = generate_otp()
-    
+
+    print(f"Generated OTP for {user.full_phone}: {otp_code}")  # Debugging line
     # Save OTP to database
     OTP.objects.create(user=user, otp=otp_code)
     

@@ -33,7 +33,7 @@ class UserManager(BaseUserManager):
 class User(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     username = None  # Remove username field
-    country_code = models.CharField(max_length=5, default='+1')  # Default to US
+    country_code = models.CharField(max_length=5, default='+880')  # Default to US
     phone_number = models.CharField(max_length=15, unique=True)  # Make phone_number unique
     is_verified = models.BooleanField(default=False)
     

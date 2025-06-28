@@ -26,7 +26,7 @@ class PhoneLoginView(APIView):
         print("-----",request.data)
         serializer = PhoneLoginSerializer(data=request.data)
         if serializer.is_valid():
-            print("-----",serializer.validated_data)
+            print("-----serializer",serializer.validated_data)
             country_code = serializer.validated_data['country_code']
             phone_number = serializer.validated_data['phone_number']
             
