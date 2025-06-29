@@ -23,10 +23,8 @@ class PhoneLoginView(APIView):
     Sends OTP to the provided phone number
     """
     def post(self, request):
-        print("-----",request.data)
         serializer = PhoneLoginSerializer(data=request.data)
         if serializer.is_valid():
-            print("-----serializer",serializer.validated_data)
             country_code = serializer.validated_data['country_code']
             phone_number = serializer.validated_data['phone_number']
             

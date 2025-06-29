@@ -22,8 +22,7 @@ def send_otp_to_phone(user, otp):
     #     to=user.full_phone
     # )
     
-    print(f"OTP {otp} sent to {user.full_phone}")
-    return True
+print    return True
 
 def create_and_send_otp(user):
     """Create an OTP for the user and send it to their phone"""
