@@ -16,7 +16,7 @@ class Country(models.Model):
         return f"{self.name} ({self.code})"
 
 class UserManager(BaseUserManager):
-    def create_user(self, phone_number, country_code='+1', password=None, **extra_fields):
+    def create_user(self, phone_number, country_code='+880', password=None, **extra_fields):
         if not phone_number:
             raise ValueError('The Phone Number field must be set')
         user = self.model(phone_number=phone_number, country_code=country_code, **extra_fields)
@@ -25,7 +25,7 @@ class UserManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, phone_number, country_code='+1', password=None, **extra_fields):
+    def create_superuser(self, phone_number, country_code='+880', password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         return self.create_user(phone_number, country_code, password, **extra_fields)

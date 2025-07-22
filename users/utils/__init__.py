@@ -9,10 +9,10 @@ def generate_otp(length=6):
     """Generate a random OTP of specified length"""
     return ''.join(random.choices(string.digits, k=length))
 
-def send_otp_to_phone(user, otp):
+def send_otp_to_phone(user, otp, request_id=None):
     """Send OTP to the user's phone number"""
     message = f"Your verification code is: {otp}"
-    return send_sms(user.full_phone, message)
+    return send_sms(user.full_phone, message, request_id, is_unicode=0)
 
 def create_and_send_otp(user):
     """Create an OTP for the user and send it to their phone"""
@@ -20,10 +20,10 @@ def create_and_send_otp(user):
 
     print(f"Generated OTP for {user.full_phone}: {otp_code}")  # Debugging line
     # Save OTP to database
-    OTP.objects.create(user=user, otp=otp_code)
+    otp = OTP.objects.create(user=user, otp=otp_code)
     
     # Send OTP to user's phone
-    return send_otp_to_phone(user, otp_code)
+    return send_otp_to_phone(user, otp_code, request_id=otp.id)
 
 def get_or_create_user(country_code, phone_number):
     """Get existing user or create a new one with the given phone number"""

@@ -156,9 +156,8 @@ JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', SECRET_KEY)
 JWT_ACCESS_TOKEN_LIFETIME_HOURS = int(os.environ.get('JWT_ACCESS_TOKEN_LIFETIME_HOURS', 1))
 JWT_REFRESH_TOKEN_LIFETIME_DAYS = int(os.environ.get('JWT_REFRESH_TOKEN_LIFETIME_DAYS', 7))
 
-# -------------------------------
-# ✅ SMS API (Twilio)
-# -------------------------------
-SMS_API_KEY = os.environ.get('TWILIO_ACCOUNT_SID')
-SMS_API_SECRET = os.environ.get('TWILIO_AUTH_TOKEN')
-SMS_SENDER_PHONE_NO = os.environ.get('TWILIO_PHONE_NUMBER')
+# Arena Bulk SMS Configuration
+ARENA_SMS_API_URL = os.environ.get("ARENA_SMS_API_URL")
+ARENA_SMS_API_ACODE = os.environ.get("ARENA_SMS_API_ACODE")
+ARENA_SMS_API_KEY = os.environ.get("ARENA_SMS_API_KEY")
+ARENA_SMS_MASKING = os.environ.get("ARENA_SMS_MASKING")
