@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+from decouple import config
 
 # Load environment variables from .env file
 load_dotenv()
@@ -10,9 +11,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # -------------------------------
 # ✅ SECURITY SETTINGS
 # -------------------------------
-SECRET_KEY = os.environ.get('SECRET_KEY')  # No default fallback in production!
-DEBUG = os.environ.get('DEBUG', 'False') == 'True'
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'www.amart.com.bd').split(',')
+
+SECRET_KEY = config("SECRET_KEY")
+DEBUG = config("DEBUG", default=False, cast=bool)
+ALLOWED_HOSTS = config("ALLOWED_HOSTS").split(',')
 
 # -------------------------------
 # ✅ APPLICATIONS
@@ -92,14 +94,18 @@ WSGI_APPLICATION = 'amat_backend.wsgi.application'
 # -------------------------------
 # ✅ DATABASE
 # -------------------------------
+
+
+
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DB_NAME'),
-        'USER': os.environ.get('DB_USER'),
-        'PASSWORD': os.environ.get('DB_PASSWORD'),
-        'HOST': os.environ.get('DB_HOST'),
-        'PORT': os.environ.get('DB_PORT', '5432'),
+        'NAME': config("DB_NAME"),
+        'USER': config("DB_USER"),
+        'PASSWORD': config("DB_PASSWORD"),
+        'HOST': config("DB_HOST"),
+        'PORT': config("DB_PORT", cast=int),
     }
 }
 
