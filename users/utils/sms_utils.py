@@ -2,10 +2,10 @@
 
 
 import requests
-import uuid
 from django.conf import settings
 
 def send_sms(phone_number, message,request_id, is_unicode=0):
+
    
     payload = {
         "auth": {
