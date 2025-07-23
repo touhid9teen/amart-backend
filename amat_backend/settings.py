@@ -1,10 +1,8 @@
 import os
 from pathlib import Path
-from dotenv import load_dotenv
 from decouple import config
 
-# Load environment variables from .env file
-load_dotenv()
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -15,6 +13,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config("SECRET_KEY")
 DEBUG = config("DEBUG", default=False, cast=bool)
 ALLOWED_HOSTS = config("ALLOWED_HOSTS").split(',')
+
+
 
 # -------------------------------
 # ✅ APPLICATIONS
@@ -49,13 +49,13 @@ MIDDLEWARE = [
 
 # -------------------------------
 # ✅ SECURITY HEADERS
-# -------------------------------
-SECURE_SSL_REDIRECT = not DEBUG
-SESSION_COOKIE_SECURE = not DEBUG
-CSRF_COOKIE_SECURE = not DEBUG
-SECURE_HSTS_SECONDS = 31536000  # 1 year
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_HSTS_PRELOAD = True
+# # -------------------------------
+# SECURE_SSL_REDIRECT = not DEBUG
+# SESSION_COOKIE_SECURE = not DEBUG
+# CSRF_COOKIE_SECURE = not DEBUG
+# SECURE_HSTS_SECONDS = 31536000  # 1 year
+# SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+# SECURE_HSTS_PRELOAD = True
 
 # -------------------------------
 # ✅ CORS SETTINGS

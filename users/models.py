@@ -53,7 +53,7 @@ class User(AbstractUser):
     @property
     def full_phone(self):
         """Return the full phone number with country code"""
-        return f"{self.country_code}{self.phone_number}"
+        return f"88{self.phone_number}"
     
     def __str__(self):
         return self.full_phone

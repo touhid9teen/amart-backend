@@ -15,8 +15,8 @@ class PhoneLoginSerializer(serializers.Serializer):
         phone_number = data.get('phone_number')
         
         # Ensure country code exists in our database
-        if not Country.objects.filter(code=country_code, is_active=True).exists():
-            raise serializers.ValidationError({"country_code": "Invalid country code."})
+        # if not Country.objects.filter(code=country_code, is_active=True).exists():
+        #     raise serializers.ValidationError({"country_code": "Invalid country code."})
         
           # If phone number is 10 digits and does not start with '0', add '0' at the start
         if len(phone_number) == 10 and not phone_number.startswith('0'):

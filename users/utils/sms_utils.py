@@ -6,7 +6,7 @@ from django.conf import settings
 
 def send_sms(phone_number, message,request_id, is_unicode=0):
 
-   
+    print(f"----------------------Sending SMS to {phone_number} with message: {message}")  # Debugging line
     payload = {
         "auth": {
             "acode": settings.ARENA_SMS_API_ACODE,

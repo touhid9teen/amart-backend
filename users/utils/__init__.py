@@ -11,7 +11,7 @@ def generate_otp(length=6):
 
 def send_otp_to_phone(user, otp, request_id=None):
     """Send OTP to the user's phone number"""
-    message = f"Your verification code is: {otp}"
+    message = f"Amart Verification Code: {otp}."
     return send_sms(user.full_phone, message, request_id, is_unicode=0)
 
 def create_and_send_otp(user):
