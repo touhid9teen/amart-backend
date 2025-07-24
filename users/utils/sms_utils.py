@@ -30,4 +30,8 @@ def send_sms(phone_number, message,request_id, is_unicode=0):
 
     response = requests.post(settings.ARENA_SMS_API_URL, json=payload, headers=headers)
 
+    # dummy_response =  {'response': {'code': 200, 'timestamp': '2025-07-24 13:57:56', 'message': 'Success'}}
+
     return response.json()
+    # return dummy_response
+

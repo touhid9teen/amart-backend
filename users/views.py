@@ -37,9 +37,11 @@ class PhoneLoginView(APIView):
             
             # Generate and send OTP
             sms_response = create_and_send_otp(user)
+
+            print('response----------',sms_response)
             if sms_response["response"]["code"] == 200:
                 return Response({
-                    'message': 'OTP sent successfully',
+                    'message': 'success',
                     'country_code': country_code,
                     'phone_number': phone_number,
                     "details": sms_response
@@ -57,6 +59,7 @@ class OTPVerificationView(APIView):
     Returns JWT token upon successful verification
     """
     def post(self, request):
+        print('data ooooy----------------', request.data)
         serializer = OTPVerificationSerializer(data=request.data)
         if serializer.is_valid():
             country_code = serializer.validated_data['country_code']
@@ -79,7 +82,7 @@ class OTPVerificationView(APIView):
                     'refresh_token': refresh_token,
                     'user_id': str(user.id),
                     'country_code': user.country_code,
-                    'phone_number': user.phone_number
+                    'phone_number': user.phone_number,
                 }, status=status.HTTP_200_OK)
                 
             except User.DoesNotExist:

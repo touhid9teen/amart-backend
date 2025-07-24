@@ -2,19 +2,17 @@ import os
 from pathlib import Path
 from decouple import config
 
-
-
+# -------------------------------
+# ✅ BASE DIRECTORY
+# -------------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # -------------------------------
 # ✅ SECURITY SETTINGS
 # -------------------------------
-
 SECRET_KEY = config("SECRET_KEY")
 DEBUG = config("DEBUG", default=False, cast=bool)
-ALLOWED_HOSTS = config("ALLOWED_HOSTS").split(',')
-
-
+ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="").split(',')
 
 # -------------------------------
 # ✅ APPLICATIONS
@@ -26,8 +24,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
     'rest_framework',
     'corsheaders',
+
+    # your apps
     'users',
     'store',
     'order',
@@ -48,27 +49,10 @@ MIDDLEWARE = [
 ]
 
 # -------------------------------
-# ✅ SECURITY HEADERS
-# # -------------------------------
-# SECURE_SSL_REDIRECT = not DEBUG
-# SESSION_COOKIE_SECURE = not DEBUG
-# CSRF_COOKIE_SECURE = not DEBUG
-# SECURE_HSTS_SECONDS = 31536000  # 1 year
-# SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-# SECURE_HSTS_PRELOAD = True
-
-# -------------------------------
-# ✅ CORS SETTINGS
-# -------------------------------
-CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_ALL_ORIGINS = False
-CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', 'http://localhost:3000').split(',')
-CORS_ALLOW_HEADERS = ["content-type", "authorization"]
-
-# -------------------------------
-# ✅ URL CONFIG
+# ✅ URLS / WSGI
 # -------------------------------
 ROOT_URLCONF = 'amat_backend.urls'
+WSGI_APPLICATION = 'amat_backend.wsgi.application'
 
 # -------------------------------
 # ✅ TEMPLATES
@@ -89,15 +73,9 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'amat_backend.wsgi.application'
-
 # -------------------------------
 # ✅ DATABASE
 # -------------------------------
-
-
-
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -115,7 +93,7 @@ DATABASES = {
 AUTH_USER_MODEL = 'users.User'
 
 # -------------------------------
-# ✅ PASSWORD VALIDATION
+# ✅ PASSWORD VALIDATORS
 # -------------------------------
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
@@ -128,7 +106,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # ✅ INTERNATIONALIZATION
 # -------------------------------
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Dhaka'
 USE_I18N = True
 USE_TZ = True
 
@@ -158,14 +136,25 @@ REST_FRAMEWORK = {
 # -------------------------------
 # ✅ JWT SETTINGS
 # -------------------------------
-JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', SECRET_KEY)
-JWT_ACCESS_TOKEN_LIFETIME_HOURS = int(os.environ.get('JWT_ACCESS_TOKEN_LIFETIME_HOURS', 1))
-JWT_REFRESH_TOKEN_LIFETIME_DAYS = int(os.environ.get('JWT_REFRESH_TOKEN_LIFETIME_DAYS', 7))
+JWT_SECRET_KEY = config("JWT_SECRET_KEY", default=SECRET_KEY)
+JWT_ACCESS_TOKEN_LIFETIME_HOURS = config("JWT_ACCESS_TOKEN_LIFETIME_HOURS", default=1, cast=int)
+JWT_REFRESH_TOKEN_LIFETIME_DAYS = config("JWT_REFRESH_TOKEN_LIFETIME_DAYS", default=7, cast=int)
 
-# Arena Bulk SMS Configuration
-ARENA_SMS_API_URL = os.environ.get("ARENA_SMS_API_URL")
-ARENA_SMS_API_ACODE = os.environ.get("ARENA_SMS_API_ACODE")
-ARENA_SMS_API_KEY = os.environ.get("ARENA_SMS_API_KEY")
-ARENA_SMS_MASKING = os.environ.get("ARENA_SMS_MASKING")
+# -------------------------------
+# ✅ CORS SETTINGS
+# -------------------------------
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='http://localhost:3000').split(',')
+CORS_ALLOW_HEADERS = ["content-type", "authorization"]
 
+# -------------------------------
+# ✅ ARENA SMS SETTINGS
+# -------------------------------
+ARENA_SMS_API_URL = config("ARENA_SMS_API_URL", default=None)
+ARENA_SMS_API_ACODE = config("ARENA_SMS_API_ACODE", default=None)
+ARENA_SMS_API_KEY = config("ARENA_SMS_API_KEY", default=None)
+ARENA_SMS_MASKING = config("ARENA_SMS_MASKING", default=None)
 
+# Optional Debug (Remove in production)
+print("ARENA_SMS_API_URL:", ARENA_SMS_API_URL)
