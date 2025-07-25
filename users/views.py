@@ -26,7 +26,6 @@ class PhoneLoginView(APIView):
             user = get_or_create_user(country_code, phone_number)
             sms_response = create_and_send_otp(user)
 
-<<<<<<< HEAD
             if sms_response["response"]["code"] == 200:
                 return Response({
                     "success": True,
@@ -35,15 +34,6 @@ class PhoneLoginView(APIView):
                         "country_code": country_code,
                         "phone_number": phone_number
                     }
-=======
-            print('response----------',sms_response)
-            if sms_response["response"]["code"] == 200:
-                return Response({
-                    'message': 'success',
-                    'country_code': country_code,
-                    'phone_number': phone_number,
-                    "details": sms_response
->>>>>>> b4a59b46ff485be444272926d3d01b18d9b6005b
                 }, status=status.HTTP_200_OK)
             return Response({
                 "success": False,
