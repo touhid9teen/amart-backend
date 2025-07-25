@@ -37,9 +37,13 @@ class OTPVerificationSerializer(serializers.Serializer):
         phone_number = data.get('phone_number')
         otp = data.get('otp')
         
+<<<<<<< HEAD
         # Ensure country code exists in our database
         # if not Country.objects.filter(code=country_code, is_active=True).exists():
         #     raise serializers.ValidationError({"country_code": "Invalid country code."})
+=======
+  
+>>>>>>> b4a59b46ff485be444272926d3d01b18d9b6005b
         
         # Remove any non-digit characters from phone number
         data['phone_number'] = ''.join(filter(str.isdigit, phone_number))
