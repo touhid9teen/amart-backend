@@ -146,6 +146,8 @@ JWT_REFRESH_TOKEN_LIFETIME_DAYS = config("JWT_REFRESH_TOKEN_LIFETIME_DAYS", defa
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='http://localhost:3000').split(',')
+print("CORS_ALLOWED_ORIGINS:", CORS_ALLOWED_ORIGINS)
+
 CORS_ALLOW_HEADERS = ["content-type", "authorization"]
 
 # -------------------------------
