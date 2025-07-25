@@ -74,7 +74,6 @@ class OTPVerificationView(APIView):
                 refresh_token = refresh_token_generator(user)
 
                 return Response({
-<<<<<<< HEAD
                     "success": True,
                     "message": "OTP verified successfully",
                     "data": {
@@ -84,14 +83,6 @@ class OTPVerificationView(APIView):
                         "country_code": user.country_code,
                         "phone_number": user.phone_number
                     }
-=======
-                    'message': 'OTP verified successfully',
-                    'access_token': access_token,
-                    'refresh_token': refresh_token,
-                    'user_id': str(user.id),
-                    'country_code': user.country_code,
-                    'phone_number': user.phone_number,
->>>>>>> b4a59b46ff485be444272926d3d01b18d9b6005b
                 }, status=status.HTTP_200_OK)
 
             except User.DoesNotExist:
