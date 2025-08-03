@@ -5,6 +5,11 @@ from .models import Order
 from .serializers import OrderSerializer
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAdminUser
+from django.core.mail import send_mail
+from django.conf import settings
+import logging
+
+logger = logging.getLogger(__name__)  # Set up logging
 
 class OrderListCreateAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -15,10 +20,22 @@ class OrderListCreateAPIView(APIView):
         return Response(serializer.data)
 
     def post(self, request):
-
         serializer = OrderSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
-            serializer.save()
+            order = serializer.save()
+
+            try:
+                send_mail(
+                    subject="🛒 New Order Received",
+                    message=f"A new order has been placed. Order ID: {order.id} and order details: {order}",
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=settings.recipient_emails,
+                    fail_silently=False,
+                )
+            except Exception as e:
+                # Log the error but don't stop order creation
+                logger.error(f"Failed to send order notification email: {e}")
+
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
