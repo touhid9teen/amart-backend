@@ -146,7 +146,6 @@ JWT_REFRESH_TOKEN_LIFETIME_DAYS = config("JWT_REFRESH_TOKEN_LIFETIME_DAYS", defa
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='http://localhost:3000').split(',')
-print("CORS_ALLOWED_ORIGINS:", CORS_ALLOWED_ORIGINS)
 
 CORS_ALLOW_HEADERS = ["content-type", "authorization"]
 
@@ -159,7 +158,7 @@ ARENA_SMS_API_KEY = config("ARENA_SMS_API_KEY", default=None)
 ARENA_SMS_MASKING = config("ARENA_SMS_MASKING", default=None)
 
 # Optional Debug (Remove in production)
-print("ARENA_SMS_API_URL:", ARENA_SMS_API_URL)
+
 
 
 
@@ -173,4 +172,5 @@ EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-recipient_emails = config('EMAIL_RECIPIENTS', default='').split(',')
+RECIPIENT_EMAILS = config('EMAIL_RECIPIENTS', default='').split(',')
+

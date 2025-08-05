@@ -9,11 +9,13 @@ def generate_otp(length=6):
 
 def send_otp_to_phone(user, otp):
     """
-    Send OTP to the user's phone number
-    This is a placeholder function - replace with actual SMS sending logic
-    using services like Twilio, Vonage, etc.
+    Send OTP to the user's phone number.
+    This is a placeholder function - replace with actual SMS sending logic.
     """
-    # In a real implementation, you would use an SMS service like:
+    # Example SMS API placeholder
+    print(f"Sending OTP '{otp}' to {user.full_phone}")
+    
+    # Replace with actual implementation:
     # from twilio.rest import Client
     # client = Client(account_sid, auth_token)
     # message = client.messages.create(
@@ -22,16 +24,19 @@ def send_otp_to_phone(user, otp):
     #     to=user.full_phone
     # )
     
-print    return True
+    return True  # Simulate successful SMS send
 
 def create_and_send_otp(user):
     """Create an OTP for the user and send it to their phone"""
     otp_code = generate_otp()
+
+    # Optional: Set expiry (e.g., 5 minutes)
+    expires_at = datetime.now() + timedelta(minutes=5)
     
-    # Save OTP to database
-    OTP.objects.create(user=user, otp=otp_code)
+    # Save OTP to the database
+    OTP.objects.create(user=user, otp=otp_code, expires_at=expires_at)
     
-    # Send OTP to user's phone
+    # Send OTP
     return send_otp_to_phone(user, otp_code)
 
 def get_or_create_user(country_code, phone_number):
