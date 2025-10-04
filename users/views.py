@@ -27,6 +27,8 @@ class PhoneSignUpView(APIView):
             phone_number = serializer.validated_data['phone_number']
             password = serializer.validated_data['password']
 
+
+            print('hare -------------------------')
             # Create unverified user first
             user = User(
                 country_code=country_code,
@@ -38,12 +40,12 @@ class PhoneSignUpView(APIView):
             user.save()
 
             # Now send OTP
-            temp_user_data = {
-                "country_code": country_code,
-                "phone_number": phone_number,
-                "user": user  # Pass user object for OTP creation
-            }
-            sms_response = create_and_send_otp(temp_user_data)
+            # temp_user_data = {
+            #     "country_code": country_code,
+            #     "phone_number": phone_number,
+            #     "user": user  # Pass user object for OTP creation
+            # }
+            sms_response = create_and_send_otp(user)
 
             if sms_response["response"]["code"] == 200:
                 return Response({
