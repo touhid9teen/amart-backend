@@ -18,7 +18,7 @@ def token_generator(user):
 
 def refresh_token_generator(user):
     """Generate a refresh token for the user"""
-    exp = timezone.now() + timedelta(days=1)
+    exp = timezone.now() + timedelta(days=30)
     payload = {
         'exp': exp,
         'phone_number': user.phone_number,
