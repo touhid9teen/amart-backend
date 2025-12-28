@@ -10,7 +10,7 @@ Django==5.2.1
 django-cors-headers==4.7.0
 djangorestframework==3.16.0
 djangorestframework_simplejwt==5.5.0
-frozenlist==1.6.0
+frozenlist==1.6.0p
 idna==3.10
 multidict==6.4.3
 pillow==11.2.1
