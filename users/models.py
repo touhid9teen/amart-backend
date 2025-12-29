@@ -34,11 +34,11 @@ class UserManager(BaseUserManager):
 class User(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     username = None  # Remove username field
-    email = models.EmailField(unique=True)  # Email is now primary
+    email = models.EmailField(unique=True)  # Email is primary for authentication
     
-    # Phone authentication fields (commented out for future use)
-    # country_code = models.CharField(max_length=5, default='+880')  # Default to BD
-    # phone_number = models.CharField(max_length=15, unique=True)  # Make phone_number unique
+    # Phone number for Django admin and future use
+    phone_number = models.CharField(max_length=15, blank=True, null=True)
+    country_code = models.CharField(max_length=5, default='+880', blank=True, null=True)
     
     is_verified = models.BooleanField(default=False)
     
@@ -46,20 +46,6 @@ class User(AbstractUser):
     REQUIRED_FIELDS = ['first_name', 'last_name']
     
     objects = UserManager()
-    
-    # Commented out phone-based constraints for future use
-    # class Meta:
-    #     constraints = [
-    #         models.UniqueConstraint(
-    #             fields=['country_code', 'phone_number'], 
-    #             name='unique_phone_with_country'
-    #         )
-    #     ]
-    
-    # @property
-    # def full_phone(self):
-    #     """Return the full phone number with country code"""
-    #     return f"88{self.phone_number}"
     
     def __str__(self):
         return self.email

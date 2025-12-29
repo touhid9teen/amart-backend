@@ -6,7 +6,7 @@ from .serializers import (
     EmailSignUpSerializer, EmailLoginSerializer, EmailOTPVerificationSerializer,
     CountrySerializer
 )
-from .utils import create_and_send_otp, get_or_create_user
+from .utils import create_and_send_otp
 from .models import Country
 from .utils.jwt_utils import token_generator, refresh_token_generator, verify_token
 
