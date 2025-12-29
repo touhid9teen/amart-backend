@@ -36,10 +36,6 @@ class User(AbstractUser):
     username = None  # Remove username field
     email = models.EmailField(unique=True)  # Email is primary for authentication
     
-    # Phone number for Django admin and future use
-    phone_number = models.CharField(max_length=15, blank=True, null=True)
-    country_code = models.CharField(max_length=5, default='+880', blank=True, null=True)
-    
     is_verified = models.BooleanField(default=False)
     
     USERNAME_FIELD = 'email'
