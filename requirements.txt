@@ -6,13 +6,16 @@ asgiref==3.8.1
 attrs==25.3.0
 certifi==2025.4.26
 charset-normalizer==3.4.2
+dj-database-url==3.0.1
 Django==5.2.1
 django-cors-headers==4.7.0
 djangorestframework==3.16.0
 djangorestframework_simplejwt==5.5.0
-frozenlist==1.6.0p
+frozenlist==1.6.0
+gunicorn==23.0.0
 idna==3.10
 multidict==6.4.3
+packaging==25.0
 pillow==11.2.1
 propcache==0.3.1
 psycopg2-binary==2.9.10
