@@ -16,47 +16,53 @@ class Country(models.Model):
         return f"{self.name} ({self.code})"
 
 class UserManager(BaseUserManager):
-    def create_user(self, phone_number, country_code='+880', password=None, **extra_fields):
-        if not phone_number:
-            raise ValueError('The Phone Number field must be set')
-        user = self.model(phone_number=phone_number, country_code=country_code, **extra_fields)
+    def create_user(self, email, password=None, **extra_fields):
+        if not email:
+            raise ValueError('The Email field must be set')
+        email = self.normalize_email(email)
+        user = self.model(email=email, **extra_fields)
         if password:
             user.set_password(password)
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, phone_number, country_code='+880', password=None, **extra_fields):
+    def create_superuser(self, email, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
-        return self.create_user(phone_number, country_code, password, **extra_fields)
+        return self.create_user(email, password, **extra_fields)
 
 class User(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     username = None  # Remove username field
-    country_code = models.CharField(max_length=5, default='+880')  # Default to US
-    phone_number = models.CharField(max_length=15, unique=True)  # Make phone_number unique
+    email = models.EmailField(unique=True)  # Email is now primary
+    
+    # Phone authentication fields (commented out for future use)
+    # country_code = models.CharField(max_length=5, default='+880')  # Default to BD
+    # phone_number = models.CharField(max_length=15, unique=True)  # Make phone_number unique
+    
     is_verified = models.BooleanField(default=False)
     
-    USERNAME_FIELD = 'phone_number'
-    REQUIRED_FIELDS = ['country_code']
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['first_name', 'last_name']
     
     objects = UserManager()
     
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=['country_code', 'phone_number'], 
-                name='unique_phone_with_country'
-            )
-        ]
+    # Commented out phone-based constraints for future use
+    # class Meta:
+    #     constraints = [
+    #         models.UniqueConstraint(
+    #             fields=['country_code', 'phone_number'], 
+    #             name='unique_phone_with_country'
+    #         )
+    #     ]
     
-    @property
-    def full_phone(self):
-        """Return the full phone number with country code"""
-        return f"88{self.phone_number}"
+    # @property
+    # def full_phone(self):
+    #     """Return the full phone number with country code"""
+    #     return f"88{self.phone_number}"
     
     def __str__(self):
-        return self.full_phone
+        return self.email
 
 class OTP(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='otps')
@@ -65,4 +71,4 @@ class OTP(models.Model):
     is_used = models.BooleanField(default=False)
     
     def __str__(self):
-        return f"{self.user.full_phone} - {self.otp}"
+        return f"{self.user.email} - {self.otp}"
