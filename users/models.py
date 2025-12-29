@@ -35,7 +35,8 @@ class User(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     username = None  # Remove username field
     email = models.EmailField(unique=True)  # Email is primary for authentication
-    
+    country_code = models.CharField(max_length=5, default="+1")  # Added to match database
+    phone_number = models.CharField(max_length=15, default="")  # Added to match database
     is_verified = models.BooleanField(default=False)
     
     USERNAME_FIELD = 'email'
