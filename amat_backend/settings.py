@@ -119,6 +119,13 @@ DATABASES = {
 AUTH_USER_MODEL = 'users.User'
 
 # -------------------------------
+# ✅ AUTHENTICATION BACKENDS
+# -------------------------------
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',  # Default Django auth backend (supports email-based user model)
+]
+
+# -------------------------------
 # ✅ PASSWORD VALIDATORS
 # -------------------------------
 AUTH_PASSWORD_VALIDATORS = [
