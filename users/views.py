@@ -23,6 +23,7 @@ class CountryViewSet(viewsets.ReadOnlyModelViewSet):
 
 class EmailSignUpView(APIView):
     def post(self, request):
+        print('>>>>>>>>>>>>>>>',request.data)
         serializer = EmailSignUpSerializer(data=request.data)
         if serializer.is_valid():
             email = serializer.validated_data['email']
