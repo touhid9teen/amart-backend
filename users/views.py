@@ -23,32 +23,29 @@ class CountryViewSet(viewsets.ReadOnlyModelViewSet):
 
 class EmailSignUpView(APIView):
     def post(self, request):
-        print('>>>>>>>>>>>>>>>',request.data)
         serializer = EmailSignUpSerializer(data=request.data)
         if serializer.is_valid():
             email = serializer.validated_data['email']
             password = serializer.validated_data['password']
-            first_name = serializer.validated_data.get('first_name', '')
-            last_name = serializer.validated_data.get('last_name', '')
 
             # Create unverified user first
             user = User(
                 email=email,
-                first_name=first_name,
-                last_name=last_name,
+                first_name='',  # Can be updated later by user
+                last_name='',   # Can be updated later by user
                 is_verified=False,  # Mark as unverified
                 is_active=True
             )
             user.set_password(password)
             user.save()
 
-            # Send OTP
+            # Send OTP via email
             sms_response = create_and_send_otp(user)
 
             if sms_response["response"]["code"] == 200:
                 return Response({
                     "success": True,
-                    "message": "User created. OTP sent successfully for verification.",
+                    "message": "User created. OTP sent successfully to your email for verification.",
                     "data": {
                         "email": email
                     }

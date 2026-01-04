@@ -196,7 +196,14 @@ ARENA_SMS_MASKING = config("ARENA_SMS_MASKING", default=None)
 
 
 #Email
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+if DEBUG:
+    # For development: use console backend to see emails in terminal
+    # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    # For production/testing: use SMTP
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
@@ -205,5 +212,8 @@ EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-RECIPIENT_EMAILS = config('EMAIL_RECIPIENTS', default='').split(',')
+RECIPIENT_EMAILS = [email.strip() for email in config('EMAIL_RECIPIENTS', default='').split(',') if email.strip()]
+
+# Email timeout
+EMAIL_TIMEOUT = 10
 

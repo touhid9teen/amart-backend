@@ -10,8 +10,6 @@ class CountrySerializer(serializers.ModelSerializer):
 class EmailSignUpSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(min_length=6, write_only=True)
-    first_name = serializers.CharField(max_length=150, required=False)
-    last_name = serializers.CharField(max_length=150, required=False)
 
     def validate(self, data):
         email = data.get("email")
