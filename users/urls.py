@@ -2,7 +2,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
     EmailLoginView, EmailSignUpView, EmailOTPVerificationView,
-    CountryViewSet, TokenRefreshView
+    CountryViewSet, TokenRefreshView, ResendOTPView
 )
 
 router = DefaultRouter()
@@ -14,6 +14,7 @@ urlpatterns = [
     path('email-login/', EmailLoginView.as_view(), name='email-login'),
     path('email-signup/', EmailSignUpView.as_view(), name='email-signup'),
     path('verify-otp/', EmailOTPVerificationView.as_view(), name='verify-email-otp'),
+    path('resend-otp/', ResendOTPView.as_view(), name='resend-otp'),
     path('refresh-token/', TokenRefreshView.as_view(), name='refresh-token'),
     
     # Phone authentication endpoints (commented out for future use)

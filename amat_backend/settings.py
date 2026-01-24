@@ -19,7 +19,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # -------------------------------
 SECRET_KEY = config("SECRET_KEY")
 DEBUG = config("DEBUG", default=False, cast=bool)
-ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="").split(',')
+ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="localhost,127.0.0.1").split(',')
 
 # -------------------------------
 # ✅ APPLICATIONS
@@ -83,21 +83,6 @@ TEMPLATES = [
 # -------------------------------
 # ✅ DATABASE
 # -------------------------------
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': config("DB_NAME"),
-#         'USER': config("DB_USER"),
-#         'PASSWORD': config("DB_PASSWORD"),
-#         'HOST': config("DB_HOST"),
-#         'PORT': config("DB_PORT", cast=int),
-#     }
-# }
-
-
-
-
-
 # Replace the DATABASES section of your settings.py with this
 tmpPostgres = urlparse(os.getenv("DATABASE_URL"))
 
@@ -190,12 +175,9 @@ ARENA_SMS_API_ACODE = config("ARENA_SMS_API_ACODE", default=None)
 ARENA_SMS_API_KEY = config("ARENA_SMS_API_KEY", default=None)
 ARENA_SMS_MASKING = config("ARENA_SMS_MASKING", default=None)
 
-# Optional Debug (Remove in production)
-
-
-
-
-#Email
+# -------------------------------
+# ✅ EMAIL SETTINGS
+# -------------------------------
 if DEBUG:
     # For development: use console backend to see emails in terminal
     # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
@@ -217,3 +199,17 @@ RECIPIENT_EMAILS = [email.strip() for email in config('EMAIL_RECIPIENTS', defaul
 # Email timeout
 EMAIL_TIMEOUT = 10
 
+# Validate email configuration
+import logging
+logger = logging.getLogger(__name__)
+
+if not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD:
+    logger.warning("⚠️  EMAIL CONFIGURATION WARNING:")
+    if not EMAIL_HOST_USER:
+        logger.warning("   - EMAIL_HOST_USER is not set")
+    if not EMAIL_HOST_PASSWORD:
+        logger.warning("   - EMAIL_HOST_PASSWORD is not set")
+    logger.warning("   Email sending will fail! Please configure email credentials.")
+    logger.warning("   See PRODUCTION_EMAIL_FIX.md for setup instructions.")
+else:
+    logger.info(f"✅ Email configured: {EMAIL_HOST_USER}")

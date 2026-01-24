@@ -33,7 +33,7 @@ def send_otp_to_email(user, otp):
     plain_message = f"""
     Your Amart verification code is: {otp}
     
-    This code will expire in 1 minutes.
+    This code will expire in 5 minutes.
     
     User Email: {user.email}
     
@@ -59,7 +59,7 @@ def send_otp_to_email(user, otp):
                     </div>
                 </div>
                 
-                <p><strong>Code expires in: 1 minutes</strong></p>
+                <p><strong>Code expires in: 5 minutes</strong></p>
                 
                 <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
                 
@@ -82,6 +82,15 @@ def send_otp_to_email(user, otp):
     """
     
     try:
+        # Validate email configuration
+        if not settings.EMAIL_HOST_USER:
+            logger.error("❌ EMAIL_HOST_USER is not configured")
+            return {"response": {"code": 500, "message": "Email configuration error: EMAIL_HOST_USER not set"}}
+        
+        if not settings.EMAIL_HOST_PASSWORD:
+            logger.error("❌ EMAIL_HOST_PASSWORD is not configured")
+            return {"response": {"code": 500, "message": "Email configuration error: EMAIL_HOST_PASSWORD not set"}}
+        
         # Create email with both plain text and HTML
         # Send OTP directly to the user's email address
         email = EmailMultiAlternatives(
@@ -91,13 +100,26 @@ def send_otp_to_email(user, otp):
             to=[user.email],  # Send to user's email, not admin
         )
         email.attach_alternative(html_message, "text/html")
+        
+        # Send email with detailed error logging
         email.send(fail_silently=False)
         logger.info(f"✅ OTP sent successfully to user: {user.email}")
         return {"response": {"code": 200, "message": "OTP sent successfully to email"}}
         
     except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
         logger.error(f"❌ Error sending email to {user.email}: {str(e)}")
-        return {"response": {"code": 500, "message": f"Failed to send email: {str(e)}"}}
+        logger.error(f"Full traceback: {error_details}")
+        
+        # Return more specific error message
+        error_message = str(e)
+        if "authentication" in error_message.lower():
+            error_message = "Email authentication failed. Please check email credentials."
+        elif "connection" in error_message.lower() or "timeout" in error_message.lower():
+            error_message = "Failed to connect to email server. Please check network settings."
+        
+        return {"response": {"code": 500, "message": f"Failed to send email: {error_message}"}}
 
 
 def create_and_send_otp(user):
@@ -125,56 +147,3 @@ def create_and_send_otp(user):
     except Exception as e:
         logger.error(f"Error in create_and_send_otp for {user.email}: {str(e)}")
         return {"response": {"code": 500, "message": f"Failed to create and send OTP: {str(e)}"}}
-
-
-# Commented out phone-based OTP sending for future use
-# def send_otp_to_phone(user, otp, request_id=None):
-#     """Send OTP to the user's phone number"""
-#     message = f"Amart Verification Code: {otp}."
-#     return send_sms(user.full_phone, message, request_id, is_unicode=0)
-
-# Commented out phone-based user creation for future use
-# def get_or_create_user(country_code, phone_number):
-#     """Get existing user or create a new one with the given phone number"""
-#     try:
-#         # First try to find by exact country_code and phone_number
-#         user = User.objects.get(
-#             country_code=country_code,
-#             phone_number=phone_number
-#         )
-#         return user
-#     except User.DoesNotExist:
-#         # If not found, check if phone_number exists with different country_code
-#         if User.objects.filter(phone_number=phone_number).exists():
-#             # Handle the conflict - in this case we'll raise an exception
-#             # You could also update the existing user's country_code instead
-#             raise ValueError(f"Phone number {phone_number} already exists with a different country code")
-#         
-#         # Create new user if no conflicts
-#         user = User.objects.create(
-#             country_code=country_code,
-#             phone_number=phone_number
-#         )
-#         return user
-
-#     """Get existing user or create a new one with the given phone number"""
-#     try:
-#         # First try to find by exact country_code and phone_number
-#         user = User.objects.get(
-#             country_code=country_code,
-#             phone_number=phone_number
-#         )
-#         return user
-#     except User.DoesNotExist:
-#         # If not found, check if phone_number exists with different country_code
-#         if User.objects.filter(phone_number=phone_number).exists():
-#             # Handle the conflict - in this case we'll raise an exception
-#             # You could also update the existing user's country_code instead
-#             raise ValueError(f"Phone number {phone_number} already exists with a different country code")
-#         
-#         # Create new user if no conflicts
-#         user = User.objects.create(
-#             country_code=country_code,
-#             phone_number=phone_number
-#         )
-#         return user
