@@ -7,6 +7,7 @@ from django.utils.html import strip_tags
 import random
 import string
 import logging
+import os
 from ..models import OTP, User
 
 logger = logging.getLogger(__name__)
@@ -15,6 +16,37 @@ def generate_otp(length=6):
     """Generate a random OTP of specified length"""
     return ''.join(random.choices(string.digits, k=length))
 
+
+def send_via_sendgrid(user, subject, plain_message, html_message):
+    """Helper to send email via SendGrid API"""
+    try:
+        from sendgrid import SendGridAPIClient
+        from sendgrid.helpers.mail import Mail
+        
+        api_key = getattr(settings, 'SENDGRID_API_KEY', None) or os.environ.get('SENDGRID_API_KEY')
+        if not api_key:
+            logger.warning("SendGrid API key not found")
+            return False
+            
+        message = Mail(
+            from_email=settings.EMAIL_HOST_USER,
+            to_emails=user.email,
+            subject=subject,
+            html_content=html_message)
+            
+        sg = SendGridAPIClient(api_key)
+        response = sg.send(message)
+        
+        if response.status_code >= 200 and response.status_code < 300:
+            logger.info(f"✅ Email sent via SendGrid to {user.email}")
+            return True
+        else:
+            logger.error(f"SendGrid failed with status {response.status_code}")
+            return False
+            
+    except Exception as e:
+        logger.error(f"SendGrid error: {str(e)}")
+        return False
 
 def send_otp_to_email(user, otp):
     """
@@ -82,28 +114,32 @@ def send_otp_to_email(user, otp):
     """
     
     try:
+        # Priority 1: Try SendGrid if API Key exists (more reliable on Render)
+        sendgrid_key = getattr(settings, 'SENDGRID_API_KEY', None) or os.environ.get('SENDGRID_API_KEY')
+        if sendgrid_key:
+            logger.info("Attempting to send via SendGrid...")
+            if send_via_sendgrid(user, subject, plain_message, html_message):
+                return {"response": {"code": 200, "message": "OTP sent successfully via SendGrid"}}
+
+        # Priority 2: Fallback to SMTP
+        
         # Validate email configuration
         if not settings.EMAIL_HOST_USER:
             logger.error("❌ EMAIL_HOST_USER is not configured")
             return {"response": {"code": 500, "message": "Email configuration error: EMAIL_HOST_USER not set"}}
         
-        if not settings.EMAIL_HOST_PASSWORD:
-            logger.error("❌ EMAIL_HOST_PASSWORD is not configured")
-            return {"response": {"code": 500, "message": "Email configuration error: EMAIL_HOST_PASSWORD not set"}}
-        
         # Create email with both plain text and HTML
-        # Send OTP directly to the user's email address
         email = EmailMultiAlternatives(
             subject=subject,
             body=plain_message,
             from_email=settings.EMAIL_HOST_USER,
-            to=[user.email],  # Send to user's email, not admin
+            to=[user.email],
         )
         email.attach_alternative(html_message, "text/html")
         
         # Send email with detailed error logging
         email.send(fail_silently=False)
-        logger.info(f"✅ OTP sent successfully to user: {user.email}")
+        logger.info(f"✅ OTP sent successfully via SMTP to user: {user.email}")
         return {"response": {"code": 200, "message": "OTP sent successfully to email"}}
         
     except Exception as e:
@@ -112,14 +148,7 @@ def send_otp_to_email(user, otp):
         logger.error(f"❌ Error sending email to {user.email}: {str(e)}")
         logger.error(f"Full traceback: {error_details}")
         
-        # Return more specific error message
-        error_message = str(e)
-        if "authentication" in error_message.lower():
-            error_message = "Email authentication failed. Please check email credentials."
-        elif "connection" in error_message.lower() or "timeout" in error_message.lower():
-            error_message = "Failed to connect to email server. Please check network settings."
-        
-        return {"response": {"code": 500, "message": f"Failed to send email: {error_message}"}}
+        return {"response": {"code": 500, "message": f"Failed to send email: {str(e)}"}}
 
 
 def create_and_send_otp(user):
