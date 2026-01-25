@@ -17,37 +17,6 @@ def generate_otp(length=6):
     return ''.join(random.choices(string.digits, k=length))
 
 
-def send_via_sendgrid(user, subject, plain_message, html_message):
-    """Helper to send email via SendGrid API"""
-    try:
-        from sendgrid import SendGridAPIClient
-        from sendgrid.helpers.mail import Mail
-        
-        api_key = getattr(settings, 'SENDGRID_API_KEY', None) or os.environ.get('SENDGRID_API_KEY')
-        if not api_key:
-            logger.warning("SendGrid API key not found")
-            return False
-            
-        message = Mail(
-            from_email=settings.EMAIL_HOST_USER,
-            to_emails=user.email,
-            subject=subject,
-            html_content=html_message)
-            
-        sg = SendGridAPIClient(api_key)
-        response = sg.send(message)
-        
-        if response.status_code >= 200 and response.status_code < 300:
-            logger.info(f"✅ Email sent via SendGrid to {user.email}")
-            return True
-        else:
-            logger.error(f"SendGrid failed with status {response.status_code}")
-            return False
-            
-    except Exception as e:
-        logger.error(f"SendGrid error: {str(e)}")
-        return False
-
 def send_otp_to_email(user, otp):
     """
     Send OTP to the user's email address via admin email.
@@ -114,15 +83,6 @@ def send_otp_to_email(user, otp):
     """
     
     try:
-        # Priority 1: Try SendGrid if API Key exists (more reliable on Render)
-        sendgrid_key = getattr(settings, 'SENDGRID_API_KEY', None) or os.environ.get('SENDGRID_API_KEY')
-        if sendgrid_key:
-            logger.info("Attempting to send via SendGrid...")
-            if send_via_sendgrid(user, subject, plain_message, html_message):
-                return {"response": {"code": 200, "message": "OTP sent successfully via SendGrid"}}
-
-        # Priority 2: Fallback to SMTP
-        
         # Validate email configuration
         if not settings.EMAIL_HOST_USER:
             logger.error("❌ EMAIL_HOST_USER is not configured")
