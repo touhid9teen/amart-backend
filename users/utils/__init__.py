@@ -17,9 +17,39 @@ def generate_otp(length=6):
     return ''.join(random.choices(string.digits, k=length))
 
 
+def send_via_resend(user, subject, html_message):
+    """Helper to send email via Resend API"""
+    try:
+        import resend
+        
+        api_key = getattr(settings, 'RESEND_API_KEY', None) or os.environ.get('RESEND_API_KEY')
+        if not api_key:
+            logger.warning("Resend API key not found")
+            return False
+            
+        resend.api_key = api_key
+        
+        params = {
+            "from": "onboarding@resend.dev",  # Default Resend testing domain
+            "to": [user.email],
+            "subject": subject,
+            "html": html_message,
+        }
+        
+        email = resend.Emails.send(params)
+        logger.info(f"✅ Email sent via Resend to {user.email}: {email}")
+        return True
+            
+    except Exception as e:
+        logger.error(f"Resend error: {str(e)}")
+        # Print detailed traceback for debugging
+        import traceback
+        traceback.print_exc()
+        return False
+
 def send_otp_to_email(user, otp):
     """
-    Send OTP to the user's email address via admin email.
+    Send OTP to the user's email address via Resend.
     
     Args:
         user: User object
@@ -29,17 +59,6 @@ def send_otp_to_email(user, otp):
         dict: Response with status code and message
     """
     subject = "🔐 Amart Email Verification Code"
-    
-    # Plain text message
-    plain_message = f"""
-    Your Amart verification code is: {otp}
-    
-    This code will expire in 5 minutes.
-    
-    User Email: {user.email}
-    
-    Do not share this code with anyone.
-    """
     
     # HTML email template
     html_message = f"""
@@ -82,33 +101,47 @@ def send_otp_to_email(user, otp):
     </html>
     """
     
-    try:
-        # Validate email configuration
-        if not settings.EMAIL_HOST_USER:
-            logger.error("❌ EMAIL_HOST_USER is not configured")
-            return {"response": {"code": 500, "message": "Email configuration error: EMAIL_HOST_USER not set"}}
-        
-        # Create email with both plain text and HTML
-        email = EmailMultiAlternatives(
-            subject=subject,
-            body=plain_message,
-            from_email=settings.EMAIL_HOST_USER,
-            to=[user.email],
-        )
-        email.attach_alternative(html_message, "text/html")
-        
-        # Send email with detailed error logging
-        email.send(fail_silently=False)
-        logger.info(f"✅ OTP sent successfully via SMTP to user: {user.email}")
-        return {"response": {"code": 200, "message": "OTP sent successfully to email"}}
-        
-    except Exception as e:
-        import traceback
-        error_details = traceback.format_exc()
-        logger.error(f"❌ Error sending email to {user.email}: {str(e)}")
-        logger.error(f"Full traceback: {error_details}")
-        
-        return {"response": {"code": 500, "message": f"Failed to send email: {str(e)}"}}
+    # Try sending via Resend
+    if send_via_resend(user, subject, html_message):
+        return {"response": {"code": 200, "message": "OTP sent successfully via Resend"}}
+    
+    # Fallback for DEBUG mode: if email fails in dev, allow anyway
+    if settings.DEBUG:
+        logger.warning(f"⚠️ [DEV MODE] Resend failed, but allowing signup. Use OTP from logs: {otp}")
+        print(f"\n============================================\n [DEV] OTP for {user.email}: {otp}\n============================================\n")
+        return {"response": {"code": 200, "message": "OTP sent to console (Dev Mode)"}}
+
+    # Fallback or Error if Resend fails
+    return {"response": {"code": 500, "message": "Failed to send email via Resend"}}
+
+    # COMMENTED OUT SMTP LOGIC AS PER REQUEST
+    # try:
+    #     # Validate email configuration
+    #     if not settings.EMAIL_HOST_USER:
+    #         logger.error("❌ EMAIL_HOST_USER is not configured")
+    #         return {"response": {"code": 500, "message": "Email configuration error: EMAIL_HOST_USER not set"}}
+    #     
+    #     # Create email with both plain text and HTML
+    #     email = EmailMultiAlternatives(
+    #         subject=subject,
+    #         body=plain_message,
+    #         from_email=settings.EMAIL_HOST_USER,
+    #         to=[user.email],
+    #     )
+    #     email.attach_alternative(html_message, "text/html")
+    #     
+    #     # Send email with detailed error logging
+    #     email.send(fail_silently=False)
+    #     logger.info(f"✅ OTP sent successfully via SMTP to user: {user.email}")
+    #     return {"response": {"code": 200, "message": "OTP sent successfully to email"}}
+    #     
+    # except Exception as e:
+    #     import traceback
+    #     error_details = traceback.format_exc()
+    #     logger.error(f"❌ Error sending email to {user.email}: {str(e)}")
+    #     logger.error(f"Full traceback: {error_details}")
+    #     
+    #     return {"response": {"code": 500, "message": f"Failed to send email: {str(e)}"}}
 
 
 def create_and_send_otp(user):

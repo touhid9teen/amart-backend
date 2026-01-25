@@ -176,6 +176,11 @@ ARENA_SMS_API_KEY = config("ARENA_SMS_API_KEY", default=None)
 ARENA_SMS_MASKING = config("ARENA_SMS_MASKING", default=None)
 
 # -------------------------------
+# ✅ RESEND EMAIL SETTINGS
+# -------------------------------
+RESEND_API_KEY = config("RESEND_API_KEY", default="re_ZyaANFis_43oF71MpkJMz2bi6rVoSwRBb")
+
+# -------------------------------
 # ✅ EMAIL SETTINGS
 # -------------------------------
 if DEBUG:
