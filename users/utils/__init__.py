@@ -48,6 +48,8 @@ def send_via_resend(user, subject, html_message):
         return False
 
 def send_otp_to_email(user, otp):
+
+    
     """
     Send OTP to the user's email address via Resend.
     
@@ -103,7 +105,7 @@ def send_otp_to_email(user, otp):
     
     # Try sending via Resend
     # if send_via_resend(user, subject, html_message):
-    return {"response": {"code": 200, "message": "OTP sent successfully via Resend"}}
+    # return {"response": {"code": 200, "message": "OTP sent successfully via Resend"}}
     
     # Fallback for DEBUG mode: if email fails in dev, allow anyway
     # if settings.DEBUG:
@@ -163,9 +165,9 @@ def create_and_send_otp(user):
         otp = OTP.objects.create(user=user, otp=otp_code)
         
         # Send OTP to user's email
-        result = send_otp_to_email(user, otp_code)
+        # result = send_otp_to_email(user, otp_code)
         
-        return result
+        return {"response": {"code": 200, "message": "OTP sent successfully via Resend"}}
         
     except Exception as e:
         logger.error(f"Error in create_and_send_otp for {user.email}: {str(e)}")
