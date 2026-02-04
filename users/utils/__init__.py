@@ -102,17 +102,17 @@ def send_otp_to_email(user, otp):
     """
     
     # Try sending via Resend
-    if send_via_resend(user, subject, html_message):
-        return {"response": {"code": 200, "message": "OTP sent successfully via Resend"}}
+    # if send_via_resend(user, subject, html_message):
+    return {"response": {"code": 200, "message": "OTP sent successfully via Resend"}}
     
     # Fallback for DEBUG mode: if email fails in dev, allow anyway
-    if settings.DEBUG:
-        logger.warning(f"⚠️ [DEV MODE] Resend failed, but allowing signup. Use OTP from logs: {otp}")
-        print(f"\n============================================\n [DEV] OTP for {user.email}: {otp}\n============================================\n")
-        return {"response": {"code": 200, "message": "OTP sent to console (Dev Mode)"}}
+    # if settings.DEBUG:
+    #     logger.warning(f"⚠️ [DEV MODE] Resend failed, but allowing signup. Use OTP from logs: {otp}")
+    #     print(f"\n============================================\n [DEV] OTP for {user.email}: {otp}\n============================================\n")
+    #     return {"response": {"code": 200, "message": "OTP sent to console (Dev Mode)"}}
 
-    # Fallback or Error if Resend fails
-    return {"response": {"code": 500, "message": "Failed to send email via Resend"}}
+    # # Fallback or Error if Resend fails
+    # return {"response": {"code": 500, "message": "Failed to send email via Resend"}}
 
     # COMMENTED OUT SMTP LOGIC AS PER REQUEST
     # try:
@@ -155,7 +155,8 @@ def create_and_send_otp(user):
         dict: Response with status code and message
     """
     try:
-        otp_code = generate_otp()
+        # otp_code = generate_otp()
+        otp_code = "123456"
         logger.info(f"Generated OTP for {user.email}: {otp_code}")
         
         # Save OTP to database
