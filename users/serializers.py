@@ -53,14 +53,14 @@ class EmailOTPVerificationSerializer(serializers.Serializer):
     otp = serializers.CharField(max_length=6)
     
     def validate(self, data):
-        # email = data.get('email')
+        email = data.get('email')
         otp = data.get('otp')
         
-        # try:
+        try:
         #     # Get unverified user (just registered)
-        #     user = User.objects.get(email=email, is_verified=False)
-        # except User.DoesNotExist:
-        #     raise serializers.ValidationError("User with this email does not exist or already verified.")
+            user = User.objects.get(email=email, is_verified=False)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("User with this email does not exist or already verified.")
         
         # # Get the latest OTP for this user
         # latest_otp = OTP.objects.filter(user=user, is_used=False).order_by('-created_at').first()
