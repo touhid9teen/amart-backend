@@ -72,8 +72,8 @@ class EmailOTPVerificationSerializer(serializers.Serializer):
             raise serializers.ValidationError("Invalid OTP.")
         
         # # Mark OTP as used
-        # latest_otp.is_used = True
-        # latest_otp.save()
+        latest_otp.is_used = True
+        latest_otp.save()
         
         data['user'] = user
         return data
