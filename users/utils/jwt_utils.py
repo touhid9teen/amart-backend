@@ -8,8 +8,8 @@ def token_generator(user):
     exp = timezone.now() + timedelta(hours=1)
     payload = {
         'exp': exp,
-        'phone_number': user.phone_number,
-        'country_code': user.country_code,
+        'email': user.email,
+        # 'country_code': '+880',
         'id': str(user.id),  # Convert UUID to string for JWT
         'iat': timezone.now(),
     }
@@ -21,8 +21,8 @@ def refresh_token_generator(user):
     exp = timezone.now() + timedelta(days=30)
     payload = {
         'exp': exp,
-        'phone_number': user.phone_number,
-        'country_code': user.country_code,
+        'email': user.email,
+        # 'country_code': user.country_code,
         'id': str(user.id),  # Convert UUID to string for JWT
         'iat': timezone.now(),
         'is_refresh': True,  # Flag to identify refresh tokens
