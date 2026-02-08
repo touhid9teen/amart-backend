@@ -25,34 +25,34 @@ class OrderListCreateAPIView(APIView):
         if serializer.is_valid():
             order = serializer.save()
             # Create the email message
-            order_message = f"""
-🛒 New Order Received!
+#             order_message = f"""
+# 🛒 New Order Received!
 
 
-📦 Order ID: {order.id}
-👤 Customer: {order.user}
-📍 Delivery Address: {order.address}
-🕒 Ordered At: {order.created_at.strftime('%Y-%m-%d %I:%M %p')}
-📝 Order Notes: {order.order_notes or 'N/A'}
+# 📦 Order ID: {order.id}
+# 👤 Customer: {order.user}
+# 📍 Delivery Address: {order.address}
+# 🕒 Ordered At: {order.created_at.strftime('%Y-%m-%d %I:%M %p')}
+# 📝 Order Notes: {order.order_notes or 'N/A'}
 
-🚚 Delivery Charge: ৳{order.delivery_charge:.2f}
-💰 Total Amount: ৳{order.total_amount:.2f}
+# 🚚 Delivery Charge: ৳{order.delivery_charge:.2f}
+# 💰 Total Amount: ৳{order.total_amount:.2f}
 
-📌 Status: {order.status.capitalize()}
-""".strip()
+# 📌 Status: {order.status.capitalize()}
+# """.strip()
 
 
-            try:
-                send_mail(
-                    subject="🛒 New Order Notification",
-                    message=order_message,
-                    from_email=settings.EMAIL_HOST_USER,
-                    recipient_list=settings.RECIPIENT_EMAILS,
-                    fail_silently=False,
-                )
-                logger.info(f"Order notification email sent for Order ID: {order.order_id}")
-            except Exception as e:
-                logger.error(f"Failed to send order notification email: {e}")
+#             try:
+#                 send_mail(
+#                     subject="🛒 New Order Notification",
+#                     message=order_message,
+#                     from_email=settings.EMAIL_HOST_USER,
+#                     recipient_list=settings.RECIPIENT_EMAILS,
+#                     fail_silently=False,
+#                 )
+#                 logger.info(f"Order notification email sent for Order ID: {order.order_id}")
+#             except Exception as e:
+#                 logger.error(f"Failed to send order notification email: {e}")
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
