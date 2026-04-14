@@ -40,6 +40,7 @@ class EmailSignUpView(APIView):
                         # User already exists and is verified
                         return Response({
                             "success": False,
+                            "code": 'AmrtRFlr5hnd',
                             "message": "An account with this email already exists. Please login instead."
                         }, status=status.HTTP_400_BAD_REQUEST)
                     else:
@@ -71,6 +72,7 @@ class EmailSignUpView(APIView):
                     return Response({
                         "success": True,
                         "message": "User created. OTP sent successfully to your email for verification.",
+                        "code": "AmrtRSu2hnd",
                         "data": {
                             "email": email,
                             "user_id": str(user.id)
@@ -86,6 +88,7 @@ class EmailSignUpView(APIView):
                     error_msg = otp_response["response"].get("message", "Failed to send OTP")
                     return Response({
                         "success": False,
+                        "code": "AmrtRFls5hnd",
                         "message": f"{error_msg}. Your account has been created but not verified. Please contact support or try again later.",
                         "data": {
                             "email": email,
@@ -121,21 +124,21 @@ class EmailLoginView(APIView):
 
             return Response({
                 "success": True,
+                "code": 'AmrtLSu2hnd',
                 "message": "Login successful",
                 "data": {
                     "access_token": access_token,
                     "refresh_token": refresh_token,
-                    "user_id": str(user.id),
-                    "email": user.email,
-                    "first_name": user.first_name,
-                    "last_name": user.last_name
-                }
+                    
+                },
+                "user_id": str(user.id),
+                "email": user.email,
             }, status=status.HTTP_200_OK)
 
         return Response({
             "success": False,
-            "message": "Invalid credentials",
-            "errors": serializer.errors
+            "message": serializer.errors",
+            "code": "'AmrtLFls5hnd'",
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -152,6 +155,7 @@ class EmailOTPVerificationView(APIView):
             return Response({
                 "success": True,
                 "message": "Email verified successfully. You can now login.",
+                "code": "AmrtVfySu2hnd",
                 "data": {
                     "user_id": str(user.id),
                     "email": user.email,
@@ -162,6 +166,7 @@ class EmailOTPVerificationView(APIView):
         return Response({
             "success": False,
             "message": "Invalid OTP data",
+            "code": "AmrtVfyFls5hnd",
             "errors": serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
 
@@ -181,6 +186,7 @@ class ResendOTPView(APIView):
             return Response({
                 "success": False,
                 "message": "Email is required"
+                "code": "AmrtRFlr5hnd"
             }, status=status.HTTP_400_BAD_REQUEST)
         
         try:
@@ -191,11 +197,13 @@ class ResendOTPView(APIView):
                 return Response({
                     "success": False,
                     "message": "No account found with this email. Please sign up first."
+                    "code": "AmrtRFlr5hnd"
                 }, status=status.HTTP_404_NOT_FOUND)
             
             if user.is_verified:
                 return Response({
                     "success": False,
+                    "code": "AmrtRFlr5hnd",
                     "message": "This account is already verified. Please login instead."
                 }, status=status.HTTP_400_BAD_REQUEST)
             
@@ -207,6 +215,7 @@ class ResendOTPView(APIView):
                 return Response({
                     "success": True,
                     "message": "OTP has been resent to your email.",
+                    "code": "AmrtRSu2hnd",
                     "data": {
                         "email": email,
                         "user_id": str(user.id)
@@ -217,6 +226,7 @@ class ResendOTPView(APIView):
                 logger.error(f"❌ Failed to resend OTP to {email}: {error_msg}")
                 return Response({
                     "success": False,
+                    "code": "AmrtRFls5hnd",
                     "message": f"Failed to resend OTP: {error_msg}"
                 }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
                 
@@ -224,6 +234,8 @@ class ResendOTPView(APIView):
             logger.error(f"❌ Error resending OTP to {email}: {str(e)}")
             return Response({
                 "success": False,
+                "code": "AmrtRFls5hnd",
+
                 "message": f"Error resending OTP: {str(e)}"
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -238,7 +250,7 @@ class TokenRefreshView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            payload = verify_token(refresh_token)
+            payload = verify_token(refresh_token,'refresh')
 
             if not payload or not payload.get("is_refresh", False):
                 return Response({
