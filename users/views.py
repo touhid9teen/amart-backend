@@ -107,8 +107,8 @@ class EmailSignUpView(APIView):
 
         return Response({
             "success": False,
-            "message": "Invalid data",
-            "errors": serializer.errors
+            "code": "AmrtInvDta",
+            "message": f"Invalid data: {serializer.errors}"
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -137,8 +137,8 @@ class EmailLoginView(APIView):
 
         return Response({
             "success": False,
-            "message": serializer.errors",
-            "code": "'AmrtLFls5hnd'",
+            "message": serializer.errors,
+            "code": "AmrtLFls5hnd",
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -185,7 +185,7 @@ class ResendOTPView(APIView):
         if not email:
             return Response({
                 "success": False,
-                "message": "Email is required"
+                "message": "Email is required",
                 "code": "AmrtRFlr5hnd"
             }, status=status.HTTP_400_BAD_REQUEST)
         
@@ -196,7 +196,7 @@ class ResendOTPView(APIView):
             if not user:
                 return Response({
                     "success": False,
-                    "message": "No account found with this email. Please sign up first."
+                    "message": "No account found with this email. Please sign up first.",
                     "code": "AmrtRFlr5hnd"
                 }, status=status.HTTP_404_NOT_FOUND)
             
