@@ -25,96 +25,120 @@ class CountryViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class EmailSignUpView(APIView):
+    permission_classes = [AllowAny]
+    throttle_scope = "signup"
+
     def post(self, request):
-        import logging
-        logger = logging.getLogger(__name__)
-        
         serializer = EmailSignUpSerializer(data=request.data)
-        if serializer.is_valid():
-            email = serializer.validated_data['email']
-            password = serializer.validated_data['password']
 
-            try:
-                # Check if user already exists
-                existing_user = User.objects.filter(email=email).first()
-                
-                if existing_user:
-                    if existing_user.is_verified:
-                        # User already exists and is verified
-                        return Response({
-                            "success": False,
-                            "code": 'AmrtRFlr5hnd',
-                            "message": "An account with this email already exists. Please login instead."
-                        }, status=status.HTTP_400_BAD_REQUEST)
-                    else:
-                        # User exists but not verified - update password and resend OTP
-                        logger.info(f"ℹ️  User exists but not verified: {email}. Updating password and resending OTP.")
-                        existing_user.set_password(password)
-                        existing_user.save()
-                        user = existing_user
-                else:
-                    # Create new unverified user
-                    user = User(
-                        email=email,
-                        first_name='',  # Can be updated later by user
-                        last_name='',   # Can be updated later by user
-                        is_verified=False,  # Mark as unverified
-                        is_active=True
-                    )
-                    user.set_password(password)
-                    user.save()
-                    logger.info(f"✅ User created: {email}")
-
-                # Send OTP via email
-                # Send OTP via email
-                otp_response = create_and_send_otp(user)
-                # otp_response = {"response": {"code": 200, "message": "OTP sent successfully via Resend"}}
-                logger.info(f"OTP Response for {email}: {otp_response}")
-
-                if otp_response["response"]["code"] == 200:
-                    return Response({
-                        "success": True,
-                        "message": "User created. OTP sent successfully to your email for verification.",
-                        "code": "AmrtRSu2hnd",
-                        "data": {
-                            "email": email,
-                            "user_id": str(user.id)
-                        }
-                    }, status=status.HTTP_201_CREATED)
-                else:
-                    # If OTP fails, keep the user but mark as unverified
-                    logger.warning(f"⚠️  OTP sending failed for {email}: {otp_response['response'].get('message', 'Unknown error')}")
-                    logger.warning(f"⚠️  User kept in database as unverified. User can retry OTP.")
-                    
-                    # User remains in database with is_verified=False
-                    # Return the specific error message from OTP sending
-                    error_msg = otp_response["response"].get("message", "Failed to send OTP")
-                    return Response({
-                        "success": False,
-                        "code": "AmrtRFls5hnd",
-                        "message": f"{error_msg}. Your account has been created but not verified. Please contact support or try again later.",
-                        "data": {
-                            "email": email,
-                            "user_id": str(user.id),
-                            "is_verified": False
-                        }
-                    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-                    
-            except Exception as e:
-                logger.error(f"❌ Error during signup for {email}: {str(e)}")
-                    
-                return Response({
+        if not serializer.is_valid():
+            return Response(
+                {
                     "success": False,
-                    "message": f"Signup failed: {str(e)}"
-                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                    "code": "SIGNUP_VALIDATION_ERROR",
+                    "message": self._flatten_errors(serializer.errors),
+                    "errors": serializer.errors,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-        return Response({
-            "success": False,
-            "code": "AmrtInvDta",
-            "message": f"Invalid data: {serializer.errors}"
-        }, status=status.HTTP_400_BAD_REQUEST)
+        email = serializer.validated_data["email"]
+        password = serializer.validated_data["password"]
+        existing_unverified_user = serializer.validated_data.get("existing_unverified_user")
 
+        try:
+            user = self._get_or_create_user(
+                email=email,
+                password=password,
+                existing_unverified_user=existing_unverified_user,
+            )
+        except Exception:
+            logger.exception("Failed to create/update user during signup. Email: %s", email)
+            return Response(
+                {
+                    "success": False,
+                    "code": "SIGNUP_USER_ERROR",
+                    "message": "Could not create your account. Please try again later.",
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
+        try:
+            otp_response = create_and_send_otp(user)
+        except Exception:
+            logger.exception("OTP service raised an exception for email: %s", email)
+            return Response(
+                {
+                    "success": False,
+                    "code": "SIGNUP_OTP_SERVICE_ERROR",
+                    "message": "Account created but we could not send the verification email. Please try again later.",
+                    "data": {"email": email},
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        if otp_response.get("response", {}).get("code") != 200:
+            otp_error = otp_response.get("response", {}).get("message", "Unknown OTP error")
+            logger.warning("OTP delivery failed for email: %s — reason: %s", email, otp_error)
+            return Response(
+                {
+                    "success": False,
+                    "code": "SIGNUP_OTP_DELIVERY_FAILED",
+                    "message": "Account created but the verification email could not be delivered. Please try again later.",
+                    "data": {"email": email},
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        logger.info("Signup successful, OTP sent. Email: %s", email)
+        return Response(
+            {
+                "success": True,
+                "code": "SIGNUP_SUCCESS",
+                "message": "Account created. Please check your email for the verification code.",
+                "data": {
+                    "email": email,
+                    "user_id": str(user.id),
+                },
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+    # ── Private helpers ────────────────────────────────────────────────────────
+
+    @staticmethod
+    def _get_or_create_user(email: str, password: str, existing_unverified_user):
+        """
+        Returns an existing unverified user (with updated password)
+        or creates a brand-new unverified user.
+        """
+        if existing_unverified_user:
+            logger.info("Resending OTP to existing unverified user. Email: %s", email)
+            existing_unverified_user.set_password(password)
+            existing_unverified_user.save(update_fields=["password"])
+            return existing_unverified_user
+
+        user = User(
+            email=email,
+            first_name="",
+            last_name="",
+            is_verified=False,
+            is_active=True,
+        )
+        user.set_password(password)
+        user.save()
+        logger.info("New user created. Email: %s", email)
+        return user
+
+    @staticmethod
+    def _flatten_errors(errors: dict) -> str:
+        """Return the first human-readable message from a serializer errors dict."""
+        for field, messages in errors.items():
+            if isinstance(messages, list) and messages:
+                return str(messages[0])
+            if isinstance(messages, str):
+                return messages
+        return "Validation failed."
 
   # your token utils
 
@@ -181,34 +205,71 @@ class EmailLoginView(APIView):
             if isinstance(messages, str):
                 return messages
         return "Validation failed."
+
+
+
+
 class EmailOTPVerificationView(APIView):
+    permission_classes = [AllowAny]
+    throttle_scope = "otp_verify"
+
     def post(self, request):
         serializer = EmailOTPVerificationSerializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.validated_data['user']
-            
-            # Mark user as verified
-            user.is_verified = True
-            user.save()
 
-            return Response({
+        if not serializer.is_valid():
+            return Response(
+                {
+                    "success": False,
+                    "code": "OTP_VALIDATION_ERROR",
+                    "message": self._flatten_errors(serializer.errors),
+                    "errors": serializer.errors,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            user = serializer.validated_data["user"]
+            user.is_verified = True
+            user.save(update_fields=["is_verified"])
+
+        except Exception:
+            logger.exception(
+                "Failed to mark user as verified. Email: %s",
+                request.data.get("email"),
+            )
+            return Response(
+                {
+                    "success": False,
+                    "code": "OTP_VERIFY_SERVER_ERROR",
+                    "message": "Verification failed due to a server error. Please try again later.",
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        logger.info("Email verified successfully. Email: %s", user.email)
+        return Response(
+            {
                 "success": True,
-                "message": "Email verified successfully. You can now login.",
-                "code": "AmrtVfySu2hnd",
+                "code": "OTP_VERIFY_SUCCESS",
+                "message": "Email verified successfully. You can now log in.",
                 "data": {
                     "user_id": str(user.id),
                     "email": user.email,
-                    "is_verified": True
-                }
-            }, status=status.HTTP_200_OK)
+                    "is_verified": True,
+                },
+            },
+            status=status.HTTP_200_OK,
+        )
 
-        return Response({
-            "success": False,
-            "message": "Invalid OTP data",
-            "code": "AmrtVfyFls5hnd",
-            "errors": serializer.errors
-        }, status=status.HTTP_400_BAD_REQUEST)
-
+    @staticmethod
+    def _flatten_errors(errors: dict) -> str:
+        """Return the first human-readable message from a serializer errors dict."""
+        for field, messages in errors.items():
+            if isinstance(messages, list) and messages:
+                return str(messages[0])
+            if isinstance(messages, str):
+                return messages
+        return "Validation failed."
 
 class ResendOTPView(APIView):
     """
