@@ -9,6 +9,9 @@ from .serializers import (
 from .utils import create_and_send_otp
 from .models import Country
 from .utils.jwt_utils import token_generator, refresh_token_generator, verify_token
+import logging
+from rest_framework.permissions import AllowAny
+
 
 User = get_user_model()
 
@@ -112,36 +115,72 @@ class EmailSignUpView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
+
+  # your token utils
+
+logger = logging.getLogger(__name__)
 class EmailLoginView(APIView):
+    permission_classes = [AllowAny]
+    throttle_scope = "login"  # add LoginRateThrottle in settings
+
     def post(self, request):
         serializer = EmailLoginSerializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.validated_data['user']
 
-            # Generate tokens
+        if not serializer.is_valid():
+            return Response(
+                {
+                    "success": False,
+                    "code": "AUTH_VALIDATION_ERROR",
+                    "message": self._flatten_errors(serializer.errors),
+                    "errors": serializer.errors,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            user = serializer.validated_data["user"]
             access_token = token_generator(user)
             refresh_token = refresh_token_generator(user)
 
-            return Response({
-                "success": True,
-                "code": 'AmrtLSu2hnd',
-                "message": "Login successful",
-                "data": {
-                    "access_token": access_token,
-                    "refresh_token": refresh_token,
-                    
+            logger.info("User logged in: %s", user.email)
+
+            return Response(
+                {
+                    "success": True,
+                    "code": "AUTH_LOGIN_SUCCESS",
+                    "message": "Login successful.",
+                    "data": {
+                        "access_token": access_token,
+                        "refresh_token": refresh_token,
+                        "user": {
+                            "id": str(user.id),
+                            "email": user.email,
+                        },
+                    },
                 },
-                "user_id": str(user.id),
-                "email": user.email,
-            }, status=status.HTTP_200_OK)
+                status=status.HTTP_200_OK,
+            )
 
-        return Response({
-            "success": False,
-            "message": serializer.errors,
-            "code": "AmrtLFls5hnd",
-        }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as exc:
+            logger.exception("Unexpected error during login for request: %s", request.data.get("email"))
+            return Response(
+                {
+                    "success": False,
+                    "code": "AUTH_SERVER_ERROR",
+                    "message": "An unexpected error occurred. Please try again later.",
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
-
+    @staticmethod
+    def _flatten_errors(errors: dict) -> str:
+        """Return the first human-readable error message from the serializer errors dict."""
+        for field, messages in errors.items():
+            if isinstance(messages, list) and messages:
+                return str(messages[0])
+            if isinstance(messages, str):
+                return messages
+        return "Validation failed."
 class EmailOTPVerificationView(APIView):
     def post(self, request):
         serializer = EmailOTPVerificationSerializer(data=request.data)
