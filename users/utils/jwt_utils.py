@@ -7,9 +7,9 @@ def token_generator(user):
     """Generate an access token for the user"""
     now = timezone.now()
     payload = {
-        'iat':now() ,
-        'exp': now()+ timedelta(hours=1),
-        type: 'access',
+        'iat': now,
+        'exp': now + timedelta(hours=1),
+        'type': 'access',
         'email': user.email,
         # 'country_code': '+880',
         'userId': str(user.id), 
@@ -22,10 +22,10 @@ def refresh_token_generator(user):
     """Generate a refresh token for the user"""
     now = timezone.now()
     payload = {
-        'iat': now(),
+        'iat': now,
         'exp': now + timedelta(days=30),  # Refresh token valid for 7 days
         'email': user.email,
-        type: 'refresh',
+        'type': 'refresh',
         # 'country_code': user.country_code,
         'userId': str(user.id),  # Convert UUID to string for JWT
         'is_refresh': True,  # Flag to identify refresh tokens

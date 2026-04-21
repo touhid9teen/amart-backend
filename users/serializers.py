@@ -19,10 +19,10 @@ class EmailSignUpSerializer(serializers.Serializer):
     password = serializers.CharField(
         write_only=True,
         required=True,
-        min_length=8,
+        min_length=6,
         error_messages={
             "required": "Password is required.",
-            "min_length": "Password must be at least 8 characters.",
+            "min_length": "Password must be at least 6 characters.",
         },
     )
 
@@ -32,15 +32,31 @@ class EmailSignUpSerializer(serializers.Serializer):
     def validate(self, data: dict) -> dict:
         email = data.get("email")
 
-        existing_user = User.objects.filter(email=email).first()
+        existing_verified_user = (
+            User.objects
+            .filter(email=email, is_verified=True)
+            .order_by("-date_joined", "-id")
+            .first()
+        )
+        if existing_verified_user:
+            raise serializers.ValidationError({
+                "email": "An account with this email already exists. Please log in instead."
+            })
 
-        if existing_user:
-            if existing_user.is_verified:
+        existing_unverified_user = (
+            User.objects
+            .filter(email=email, is_verified=False)
+            .order_by("-date_joined", "-id")
+            .first()
+        )
+
+        if existing_unverified_user:
+            if existing_unverified_user.is_verified:
                 raise serializers.ValidationError({
                     "email": "An account with this email already exists. Please log in instead."
                 })
             # Unverified user — pass through so the view can update & resend OTP
-            data["existing_unverified_user"] = existing_user
+            data["existing_unverified_user"] = existing_unverified_user
 
         return data
 
@@ -64,30 +80,30 @@ class EmailLoginSerializer(serializers.Serializer):
         email = data.get("email")
         password = data.get("password")
 
-        # Single query — avoids leaking whether the email exists via different errors
-        try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
+        matching_users = User.objects.filter(email=email).order_by("-is_verified", "-is_active", "-date_joined", "-id")
+        users = list(matching_users)
+        if not users:
             raise serializers.ValidationError(
                 {"non_field": "Invalid email or password."}
             )
 
-        if not user.is_verified:
+        matched_user = next((user for user in users if user.check_password(password)), None)
+        if not matched_user:
+            raise serializers.ValidationError(
+                {"non_field": "Invalid email or password."}
+            )
+
+        if not matched_user.is_verified:
             raise serializers.ValidationError(
                 {"non_field": "Account not verified. Please check your email."}
             )
 
-        if not user.is_active:
+        if not matched_user.is_active:
             raise serializers.ValidationError(
                 {"non_field": "Your account has been deactivated. Contact support."}
             )
 
-        if not user.check_password(password):
-            raise serializers.ValidationError(
-                {"non_field": "Invalid email or password."}
-            )
-
-        data["user"] = user
+        data["user"] = matched_user
         return data
 
 class EmailOTPVerificationSerializer(serializers.Serializer):
@@ -121,20 +137,17 @@ class EmailOTPVerificationSerializer(serializers.Serializer):
         email = data.get("email")
         otp_input = data.get("otp")
 
-        # ── 1. Resolve user ────────────────────────────────────────────────
-        matching_users = User.objects.filter(email=email, is_verified=False).order_by("-date_joined", "-id")
-
+        # ── 1. Resolve the latest OTP across all pending duplicate users ───
+        matching_users = User.objects.filter(email=email, is_verified=False)
         if not matching_users.exists():
             raise serializers.ValidationError({
                 "email": "No pending verification found for this email."
             })
 
-        user = matching_users.first()
-
-        # ── 2. Fetch latest unused OTP ─────────────────────────────────────
         latest_otp = (
             OTP.objects
-            .filter(user=user, is_used=False)
+            .filter(user__in=matching_users, is_used=False)
+            .select_related("user")
             .order_by("-created_at")
             .first()
         )
@@ -143,6 +156,8 @@ class EmailOTPVerificationSerializer(serializers.Serializer):
             raise serializers.ValidationError({
                 "otp": "No active OTP found. Please request a new one."
             })
+
+        user = latest_otp.user
 
         # ── 3. Check expiry ────────────────────────────────────────────────
         expires_at = getattr(latest_otp, "expires_at", None)
