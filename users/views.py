@@ -1,4 +1,8 @@
+import json
+import logging
+
 from rest_framework import status, viewsets
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.contrib.auth import get_user_model
@@ -9,11 +13,33 @@ from .serializers import (
 from .utils import create_and_send_otp
 from .models import Country
 from .utils.jwt_utils import token_generator, refresh_token_generator, verify_token
-import logging
 from rest_framework.permissions import AllowAny
 
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
+
+
+class AuthRequestDataMixin:
+    parser_classes = (JSONParser, FormParser, MultiPartParser)
+
+    @staticmethod
+    def _get_request_data(request):
+        """
+        Accept JSON bodies even when the client omits the Content-Type header.
+        """
+        if request.data:
+            return request.data
+
+        if not request.body:
+            return request.data
+
+        try:
+            parsed_body = json.loads(request.body.decode("utf-8"))
+        except (TypeError, ValueError, UnicodeDecodeError):
+            return request.data
+
+        return parsed_body if isinstance(parsed_body, dict) else request.data
 
 class CountryViewSet(viewsets.ReadOnlyModelViewSet):
     """
@@ -24,14 +50,22 @@ class CountryViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = CountrySerializer
 
 
-class EmailSignUpView(APIView):
+class EmailSignUpView(AuthRequestDataMixin, APIView):
     permission_classes = [AllowAny]
     throttle_scope = "signup"
 
     def post(self, request):
-        serializer = EmailSignUpSerializer(data=request.data)
+        request_data = self._get_request_data(request)
+        logger.warning(
+            "Signup request debug: content_type=%s request_data=%s raw_body=%s",
+            request.content_type,
+            request_data,
+            request.body.decode("utf-8", errors="replace") if request.body else "",
+        )
+        serializer = EmailSignUpSerializer(data=request_data)
 
         if not serializer.is_valid():
+            logger.warning("Signup validation failed with errors: %s", serializer.errors)
             return Response(
                 {
                     "success": False,
@@ -142,13 +176,13 @@ class EmailSignUpView(APIView):
 
   # your token utils
 
-logger = logging.getLogger(__name__)
-class EmailLoginView(APIView):
+class EmailLoginView(AuthRequestDataMixin, APIView):
     permission_classes = [AllowAny]
     throttle_scope = "login"  # add LoginRateThrottle in settings
 
     def post(self, request):
-        serializer = EmailLoginSerializer(data=request.data)
+        request_data = self._get_request_data(request)
+        serializer = EmailLoginSerializer(data=request_data)
 
         if not serializer.is_valid():
             return Response(
@@ -186,7 +220,7 @@ class EmailLoginView(APIView):
             )
 
         except Exception as exc:
-            logger.exception("Unexpected error during login for request: %s", request.data.get("email"))
+            logger.exception("Unexpected error during login for request: %s", request_data.get("email"))
             return Response(
                 {
                     "success": False,
@@ -209,12 +243,13 @@ class EmailLoginView(APIView):
 
 
 
-class EmailOTPVerificationView(APIView):
+class EmailOTPVerificationView(AuthRequestDataMixin, APIView):
     permission_classes = [AllowAny]
     throttle_scope = "otp_verify"
 
     def post(self, request):
-        serializer = EmailOTPVerificationSerializer(data=request.data)
+        request_data = self._get_request_data(request)
+        serializer = EmailOTPVerificationSerializer(data=request_data)
 
         if not serializer.is_valid():
             return Response(
@@ -235,7 +270,7 @@ class EmailOTPVerificationView(APIView):
         except Exception:
             logger.exception(
                 "Failed to mark user as verified. Email: %s",
-                request.data.get("email"),
+                request_data.get("email"),
             )
             return Response(
                 {
@@ -271,16 +306,14 @@ class EmailOTPVerificationView(APIView):
                 return messages
         return "Validation failed."
 
-class ResendOTPView(APIView):
+class ResendOTPView(AuthRequestDataMixin, APIView):
     """
     Resend OTP to user's email.
     Useful when user didn't receive the initial OTP or it expired.
     """
     def post(self, request):
-        import logging
-        logger = logging.getLogger(__name__)
-        
-        email = request.data.get('email')
+        request_data = self._get_request_data(request)
+        email = request_data.get('email')
         
         if not email:
             return Response({
@@ -339,9 +372,10 @@ class ResendOTPView(APIView):
                 "message": f"Error resending OTP: {str(e)}"
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-class TokenRefreshView(APIView):
+class TokenRefreshView(AuthRequestDataMixin, APIView):
     def post(self, request):
-        refresh_token = request.data.get("refresh_token")
+        request_data = self._get_request_data(request)
+        refresh_token = request_data.get("refresh_token")
 
         if not refresh_token:
             return Response({
