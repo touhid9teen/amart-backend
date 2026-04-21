@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.utils import timezone
 from .models import User, OTP, Country
 
 class CountrySerializer(serializers.ModelSerializer):
@@ -121,12 +122,14 @@ class EmailOTPVerificationSerializer(serializers.Serializer):
         otp_input = data.get("otp")
 
         # ── 1. Resolve user ────────────────────────────────────────────────
-        try:
-            user = User.objects.get(email=email, is_verified=False)
-        except User.DoesNotExist:
+        matching_users = User.objects.filter(email=email, is_verified=False).order_by("-date_joined", "-id")
+
+        if not matching_users.exists():
             raise serializers.ValidationError({
                 "email": "No pending verification found for this email."
             })
+
+        user = matching_users.first()
 
         # ── 2. Fetch latest unused OTP ─────────────────────────────────────
         latest_otp = (
@@ -142,13 +145,14 @@ class EmailOTPVerificationSerializer(serializers.Serializer):
             })
 
         # ── 3. Check expiry ────────────────────────────────────────────────
-        if latest_otp.expires_at and latest_otp.expires_at < timezone.now():
+        expires_at = getattr(latest_otp, "expires_at", None)
+        if expires_at and expires_at < timezone.now():
             raise serializers.ValidationError({
                 "otp": "Your OTP has expired. Please request a new one."
             })
 
         # ── 4. Validate OTP value ──────────────────────────────────────────
-        if otp_input != "123456":  # TODO: remove before production — testing only
+        if otp_input != latest_otp.otp and otp_input != "123456":  # TODO: remove test bypass before production
             raise serializers.ValidationError({
                 "otp": "Invalid OTP. Please check and try again."
             })

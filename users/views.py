@@ -1,6 +1,7 @@
 import json
 import logging
 
+from django.http import RawPostDataException
 from rest_framework import status, viewsets
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.views import APIView
@@ -56,11 +57,16 @@ class EmailSignUpView(AuthRequestDataMixin, APIView):
 
     def post(self, request):
         request_data = self._get_request_data(request)
+        try:
+            raw_body = request.body.decode("utf-8", errors="replace") if request.body else ""
+        except RawPostDataException:
+            raw_body = "<unavailable: request stream already consumed>"
+
         logger.warning(
             "Signup request debug: content_type=%s request_data=%s raw_body=%s",
             request.content_type,
             request_data,
-            request.body.decode("utf-8", errors="replace") if request.body else "",
+            raw_body,
         )
         serializer = EmailSignUpSerializer(data=request_data)
 
