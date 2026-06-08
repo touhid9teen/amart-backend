@@ -29,12 +29,24 @@ class UserManager(BaseUserManager):
     def create_superuser(self, email, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('role', 'superadmin')
         return self.create_user(email, password, **extra_fields)
 
 class User(AbstractUser):
+    ROLE_CHOICES = [
+        ('user', 'User'),
+        ('admin', 'Admin'),
+        ('superadmin', 'Super Admin'),
+    ]
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     username = None  # Remove username field
     email = models.EmailField(unique=True)  # Email is primary for authentication
+    role = models.CharField(
+        max_length=20,
+        choices=ROLE_CHOICES,
+        default='user'
+    )
     # country_code = models.CharField(max_length=5, blank=True, null=True)  # Commented: Optional, for future phone auth
     # phone_number = models.CharField(max_length=15, blank=True, null=True)  # Commented: Optional, for future phone auth
     is_verified = models.BooleanField(default=False)
