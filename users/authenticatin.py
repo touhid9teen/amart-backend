@@ -16,7 +16,7 @@ class CustomAuthentication(BaseAuthentication):
             if token:
                 try:
                     payload = self.decode_token(token)
-                    user_id = payload.get('id')
+                    user_id = payload.get('userId')
                     if not user_id:
                         raise AuthenticationFailed('Invalid token payload')
 
