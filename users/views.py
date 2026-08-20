@@ -398,7 +398,7 @@ class TokenRefreshView(AuthRequestDataMixin, APIView):
                     "message": "Invalid or non-refresh token."
                 }, status=status.HTTP_401_UNAUTHORIZED)
 
-            user_id = payload.get("id")
+            user_id = payload.get("userId")
             user = User.objects.get(id=user_id)
 
             access_token = token_generator(user)
