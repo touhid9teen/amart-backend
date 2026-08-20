@@ -166,7 +166,7 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='http://localhost:3000').split(',')
 
-CORS_ALLOW_HEADERS = ["content-type", "authorization"]
+CORS_ALLOW_HEADERS = ["content-type", "authorization", "accept", "origin", "x-requested-with"]
 
 # -------------------------------
 # ✅ ARENA SMS SETTINGS
@@ -179,7 +179,7 @@ ARENA_SMS_MASKING = config("ARENA_SMS_MASKING", default=None)
 # -------------------------------
 # ✅ RESEND EMAIL SETTINGS
 # -------------------------------
-RESEND_API_KEY = config("RESEND_API_KEY", default="re_ZyaANFis_43oF71MpkJMz2bi6rVoSwRBb")
+RESEND_API_KEY = config("RESEND_API_KEY", default="")
 
 # -------------------------------
 # ✅ EMAIL SETTINGS
