@@ -419,7 +419,7 @@ class AdminProductList(APIView):
         if permission_error:
             return permission_error
 
-        products = Product.objects.all()
+        products = Product.objects.select_related('brand').prefetch_related('categories').all()
 
         # Filters
         search = request.query_params.get('search')
@@ -476,7 +476,7 @@ class AdminProductDetail(APIView):
     permission_classes = [IsAuthenticated]
 
     def get_object(self, pk):
-        return get_object_or_404(Product, pk=pk)
+        return get_object_or_404(Product.objects.select_related('brand').prefetch_related('categories'), pk=pk)
 
     def get(self, request, pk):
         permission_error = AdminPermissionMixin().check_admin_permission(request)
