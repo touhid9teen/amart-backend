@@ -189,10 +189,8 @@ class ProductList(APIView):
         
         products = products.only('id', 'name', 'mrp', 'sellingPice', 'ItemQuantityType', 'image', 'is_featured')
         
-        paginator = StandardResultsSetPagination()
-        page = paginator.paginate_queryset(products, request)
-        serializer = ProductListSerializer(page, many=True)
-        return paginator.get_paginated_response(serializer.data)
+        serializer = ProductListSerializer(products, many=True)
+        return Response(serializer.data)
 
 
     def post(self, request, format=None):
@@ -282,10 +280,8 @@ class FeaturedProducts(APIView):
             'id', 'name', 'mrp', 'sellingPice', 'ItemQuantityType', 'image', 'is_featured'
         )
         
-        paginator = StandardResultsSetPagination()
-        page = paginator.paginate_queryset(products, request)
-        serializer = ProductListSerializer(page, many=True)
-        return paginator.get_paginated_response(serializer.data)
+        serializer = ProductListSerializer(products, many=True)
+        return Response(serializer.data)
 
 
 class ProductsByCategory(APIView):
@@ -310,10 +306,8 @@ class ProductsByCategory(APIView):
             'id', 'name', 'mrp', 'sellingPice', 'ItemQuantityType', 'image', 'is_featured'
         )
         
-        paginator = StandardResultsSetPagination()
-        page = paginator.paginate_queryset(products, request)
-        serializer = ProductListSerializer(page, many=True)
-        return paginator.get_paginated_response(serializer.data)
+        serializer = ProductListSerializer(products, many=True)
+        return Response(serializer.data)
 
     
 
