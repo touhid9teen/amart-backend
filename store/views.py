@@ -14,11 +14,14 @@ from .serializers import (
     UserCartSerializer
 )
 from rest_framework.pagination import PageNumberPagination
+from django.db.models import Prefetch
 
-# class StandardResultsSetPagination(PageNumberPagination):
-#     page_size = 10
-#     page_size_query_param = 'page_size'
-#     max_page_size = 100
+
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 50
+    page_size_query_param = 'page_size'
+    max_page_size = 200
+
 
 # Category API Views
 class CategoryList(APIView):
@@ -147,7 +150,7 @@ class ProductList(APIView):
         - max_price: Filter by maximum selling price
         - has_image: Filter products with images (true/false)
         """
-        products = Product.objects.filter(is_active=True)
+        products = Product.objects.filter(is_active=True).prefetch_related('categories')
         
         # Apply filters
         search = request.query_params.get('search')
@@ -184,9 +187,12 @@ class ProductList(APIView):
             elif has_image.lower() == 'false':
                 products = products.filter(image__isnull=True)
         
-        # Apply pagination
-        serializer = ProductListSerializer(products, many=True)
-        return Response(serializer.data)
+        products = products.only('id', 'name', 'mrp', 'sellingPice', 'ItemQuantityType', 'image', 'is_featured')
+        
+        paginator = StandardResultsSetPagination()
+        page = paginator.paginate_queryset(products, request)
+        serializer = ProductListSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
 
     def post(self, request, format=None):
@@ -219,7 +225,7 @@ class ProductDetail(APIView):
     
     def get_object(self, pk):
         try:
-            return Product.objects.get(pk=pk)
+            return Product.objects.prefetch_related('categories').select_related('brand').get(pk=pk)
         except Product.DoesNotExist:
             raise Http404
 
@@ -270,10 +276,16 @@ class FeaturedProducts(APIView):
         """
         Get all featured products.
         """
-        products = Product.objects.filter(is_featured=True, is_active=True)
+        products = Product.objects.filter(
+            is_featured=True, is_active=True
+        ).prefetch_related('categories').only(
+            'id', 'name', 'mrp', 'sellingPice', 'ItemQuantityType', 'image', 'is_featured'
+        )
         
-        serializer = ProductListSerializer(products, many=True)
-        return Response(serializer.data)
+        paginator = StandardResultsSetPagination()
+        page = paginator.paginate_queryset(products, request)
+        serializer = ProductListSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
 
 class ProductsByCategory(APIView):
@@ -292,10 +304,16 @@ class ProductsByCategory(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
         
-        products = Product.objects.filter(categories=category, is_active=True)
+        products = Product.objects.filter(
+            categories=category, is_active=True
+        ).prefetch_related('categories').only(
+            'id', 'name', 'mrp', 'sellingPice', 'ItemQuantityType', 'image', 'is_featured'
+        )
         
-        serializer = ProductListSerializer(products, many=True)
-        return Response(serializer.data)
+        paginator = StandardResultsSetPagination()
+        page = paginator.paginate_queryset(products, request)
+        serializer = ProductListSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
     
 
